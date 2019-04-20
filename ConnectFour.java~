@@ -1,0 +1,440 @@
+import java.util.ArrayList;
+import javax.swing.*;
+/**
+ * The ConnectFour class.
+ * 
+ * This class represents a Connect Four (TM)
+ * game, which allows two players to drop
+ * checkers into a grid until one achieves
+ * four checkers in a straight line.
+ * @author Jordan de Souza
+ * @version June 14, 2017
+ */
+public class ConnectFour{
+  //used to keep track of how many checkers are in each column
+  int column0 = 0;
+  int column1 = 0;
+  int column2 = 0;
+  int column3 = 0;
+  int column4 = 0;
+  int column5 = 0;
+  int column6 = 0;
+  //for calculations / ending stuffs
+  int spaceOnGrid;
+  int turn = 0;
+  int end = 0;
+  boolean columnWin = false;
+  boolean rowWin = false;
+  boolean diagonalWin = false;
+  
+  
+  //ArrayLists for players, and a general arraylist
+  ArrayList <Integer> player1 = new ArrayList<Integer>();
+  ArrayList <Integer> player2 = new ArrayList<Integer>();
+  ArrayList <Integer> player1Col = new ArrayList<Integer>();
+  ArrayList <Integer> player2Col = new ArrayList<Integer>();
+  ArrayList <Integer> player1Row = new ArrayList<Integer>();
+  ArrayList <Integer> player2Row = new ArrayList<Integer>();
+  ArrayList <Integer> player = new ArrayList<Integer>();
+  ArrayList <Integer> playerRow = new ArrayList<Integer>();
+  ArrayList <Integer> playerCol = new ArrayList<Integer>();
+  
+  //displays a textbox, used for when you win
+  public static void infoBox(String infoMessage, String titleBar)   {
+    JOptionPane.showMessageDialog(null, infoMessage, "InfoBox: " + titleBar, JOptionPane.INFORMATION_MESSAGE);
+  }//infobox
+  
+  
+// the grid used for storing the game layout.
+  private int[][] grid;
+  // the player whose turn it is.
+  private int currentPlayer; 
+  /**
+   * The ConnectFour constructor.
+   * 
+   * Creates and initializes the grid for the
+   * Connect Four game.
+   */
+  public ConnectFour() {
+    // create the grid
+    grid = new int[7][6];
+    // initialize the grid
+    for (int row = 0; row < 6; row++) {
+      for (int column = 0; column < 7; column++) {
+        // set the position to a default value
+        grid[column][row] = 0;
+      }
+    }
+    // set the first move to Player 1
+    currentPlayer = 1;
+  }//ConnectFour method
+  
+  
+  /**
+   * The drop method.
+   * 
+   * Drop a checker into the specified column,
+   * and return the row that the checker lands on.
+   * row + (column * 6) is used to give each space a uniqiue value
+   * stores that value into an array list for the current player to be used to check win
+   * Sends info to the hasWon method, and then receives a boolean value,
+   * if hasWon is true, it will send control to the closeStuffs method
+   * @param column the column that the checker was dropped into
+   * @return row the row that the checker landed on
+   */
+  int drop(int column) {
+    int row = columnValue(column);
+    spaceOnGrid = row + (column * 6);
+    if(turn == 42 || end == 1){
+      closeStuffs(currentPlayer, turn, end, diagonalWin, columnWin, rowWin);
+    } 
+    if(row < 6){
+      //Record the space, column, and row of the checker dropped in an array list for the current player
+      if(currentPlayer == 1){
+        player1.add(spaceOnGrid);
+        player1Col.add(column);
+        player1Row.add(row);
+      }else{
+        player2.add(spaceOnGrid);
+        player2Col.add(column);
+        player2Row.add(row);
+      }if (hasWon(spaceOnGrid, column, row)){
+        end++;
+      }
+      turn++;
+      currentPlayer = (currentPlayer % 2) + 1;
+    }else{
+    }
+    return row;
+  }//drop method
+  
+  
+  /** 
+   * The columnValue method.
+   * 
+   * input the column and it adds one to the column counter
+   * this keeps track of how many checkers are in each column
+   * return the number of checkers in column to make sure that the rows are added properly
+   * @param column the column that the checker was dropped into
+   * @return columnVal the number of checkers in the current column
+   */
+  int columnValue(int column) {
+    int columnVal = 0;  
+//first column
+    if(column == 0){
+      columnVal = column0;
+      column0++;
+      return columnVal;
+    }
+    //second column
+    else if(column == 1){
+      columnVal = column1;
+      column1++;
+      return columnVal;
+    }
+    //third column
+    else if(column == 2){
+      columnVal = column2;
+      column2++;
+      return columnVal;
+    }
+    //fourth column
+    else if(column == 3){
+      columnVal = column3;
+      column3++;
+      return columnVal;
+    }
+    //fifth column
+    else if(column == 4){
+      columnVal = column4;
+      column4++;
+      return columnVal;
+    }
+    //sixth column
+    else if(column == 5){
+      columnVal = column5;
+      column5++;
+      return columnVal;
+    }
+    //seventh column
+    else{
+      columnVal = column6;
+      column6++;
+      return columnVal;
+    }
+  }//columnValue method
+  
+  
+  /**
+   * The toString method
+   * 
+   * Returns a String representation of this 
+   * Connect Four (TM) game.
+   */
+  public String toString() {
+    String returnString = "";
+    for (int row = 5; row >= 0; row--) {
+      for (int column = 0; column < 7; column++) {
+        returnString = returnString + grid[column][row];
+      }
+      returnString = returnString + "\n";
+      System.out.println(returnString);
+    }
+    return returnString;
+  }//toString method  
+  
+  
+  /**
+   * The hasWon method.
+   * checks who's turn it is and then assigns that players arraylist to a general list, 
+   * This method returns true if one of the 
+   * players has won the game.
+   * First the columns are checked, since there is only one proper alignment for columns, it checks that the four checkers
+   * are in the same column
+   * Then the rows are checked, it checks to see if there are four checkers next to eachother and each possible alignment
+   * (4 in total) is checked
+   * Then the Diagonal going from top left to bottom right (DTL) is checked, similarly to the rows, there are 4 proper win
+   * conditions so it checks each of them and if there is a possible win, it sends control to the diagonalCheckTL method to make sure
+   * that the four checkers are in a diagonal line
+   * Finally, it checks the Diagonal going from top right to bottom left (DTR), as with the previous two, there are 4 possible
+   * win conditions, so it checks to see if one possible win is present
+   * @param spaceOnGrid the value used to give each space a unique value so that it can be stored in an array list and extracted later
+   * @param column the current column that the checker was dropped into
+   * @param row the current row that the checker was dropped into
+   * @return status if a player won or not
+   */
+  public boolean hasWon(int spaceOnGrid, int column, int row) {
+    boolean status = false;
+    //used to check win, name is the thing being checked (for example, col = column) followed by the number of spaces away the checker being checked is
+    //(for example, COL1SPACE = checking if there is a checker 1 spot vertically away from the checker dropped in)
+    final int COL1SPACE = 1;
+    final int COL2SPACE = 2;
+    final int COL3SPACE = 3;
+    final int SAMECOL = 6;
+    
+    final int ROW1SPACE = 6;
+    final int ROW2SPACE = 12;
+    final int ROW3SPACE = 18;
+    
+    //DTL means Diagonal Top Left
+    final int DTL1SPACE = 5;
+    final int DTL2SPACE = 10;
+    final int DTL3SPACE = 15;
+    
+//DTR means Diagonal Top Right
+    final int DTR1SPACE = 7;
+    final int DTR2SPACE = 14;
+    final int DTR3SPACE = 21;
+    
+    if (currentPlayer == 1){
+      player = player1;
+      playerRow = player1Row;
+      playerCol = player1Col;
+    }else{
+      player = player2;
+      playerRow = player2Row;
+      playerCol = player2Col;
+    }
+    
+//check columns
+    
+//checks to see if there is a line of 4 checkers in the column
+    if (player.contains((spaceOnGrid) - COL1SPACE) && (player.contains((spaceOnGrid) - COL2SPACE)) && (player.contains((spaceOnGrid) - COL3SPACE))){
+      
+      //next three lines just make sure that the 4 checkers are in the same column
+      if(player.contains((spaceOnGrid) - COL1SPACE) && ((spaceOnGrid - COL1SPACE) / SAMECOL) == spaceOnGrid / SAMECOL){
+        if(player.contains((spaceOnGrid) - COL2SPACE) && ((spaceOnGrid - COL2SPACE) / SAMECOL) == spaceOnGrid / SAMECOL){
+          if(player.contains((spaceOnGrid) - COL3SPACE) && ((spaceOnGrid - COL3SPACE) / SAMECOL) == spaceOnGrid / SAMECOL){
+            columnWin = true;
+            return status = true;
+            
+          }
+        }
+      }
+      
+//check row      
+      
+//if checker was placed at the farthest left of a line of 4
+    } if((player.contains((spaceOnGrid) + ROW3SPACE) && player.contains((spaceOnGrid) + ROW2SPACE) && player.contains((spaceOnGrid) + ROW1SPACE))
+           
+           //if checker was placed at the farthest right of a line of 4
+           || (player.contains((spaceOnGrid) - ROW3SPACE) && player.contains((spaceOnGrid) - ROW2SPACE) && player.contains((spaceOnGrid) - ROW1SPACE))
+           
+//if checker was placed in the middle right of a line of 4
+           || (player.contains((spaceOnGrid) + ROW1SPACE) && player.contains((spaceOnGrid) - ROW1SPACE) && player.contains((spaceOnGrid) - ROW2SPACE))
+           
+           //if checker was placed in the middle left of a line of 4
+           || (player.contains((spaceOnGrid) + ROW1SPACE) && player.contains((spaceOnGrid) - ROW1SPACE) && player.contains((spaceOnGrid) + ROW2SPACE))){
+      rowWin = true;
+      return status = true;
+      
+      
+      
+//check diagonal line going from the top left to bottom right (DTL means diagonal top left)
+      
+      //if checker was placed on the top left of a diagonal line of four (1st from left)
+    }if((player.contains((spaceOnGrid) + DTL3SPACE) && player.contains((spaceOnGrid) + DTL2SPACE) && player.contains((spaceOnGrid) + DTL1SPACE))
+          
+          // if checker was placed on the bottom right of a diagonal line of four (4th from left)
+          || (player.contains((spaceOnGrid) - DTL3SPACE) && player.contains((spaceOnGrid) - DTL2SPACE) && player.contains((spaceOnGrid) - DTL1SPACE))
+          
+// if checker was placed on the middle left of a diagonal line of four (2nd from left)
+          || (player.contains((spaceOnGrid) + DTL1SPACE) && player.contains((spaceOnGrid) - DTL1SPACE)  && player.contains((spaceOnGrid) + DTL2SPACE))
+          
+          // if checker was placed on the middle right of a diagonal line of four (3rd from left)
+          ||(player.contains((spaceOnGrid) + DTL1SPACE) && player.contains((spaceOnGrid) - DTL1SPACE)  && player.contains((spaceOnGrid) - DTL2SPACE))){
+      if(diagonalCheckTL(spaceOnGrid, column, row)){
+        diagonalWin = true;
+        return status = true;
+        
+      }      
+    }
+    
+    
+//check diagonal line going from the top right to bottom left (DTR means diagonal top right)
+    
+// if there is a checker on at least one immediate (1 space away) diagonal side of the checker that was recently dropped in
+    if(player.contains((spaceOnGrid) + DTR1SPACE) || player.contains((spaceOnGrid) - DTR1SPACE) ){
+      
+      // if there is a checker on at least one slot that is 2 spaces away diagonally from the checker that was recently dropped in
+      if(player.contains((spaceOnGrid) + DTR2SPACE) || player.contains((spaceOnGrid) - DTR2SPACE) ){
+        
+        // if checker was placed on the bottom left of a diagonal line of four (1st from the left)
+        if((player.contains((spaceOnGrid) + DTR3SPACE) && player.contains((spaceOnGrid) + DTR2SPACE) && player.contains((spaceOnGrid) + DTR1SPACE))
+             
+             // if checker was placed on the top right of a diagonal line of four (fourth from the left)
+             || (player.contains((spaceOnGrid) - DTR3SPACE) && player.contains((spaceOnGrid) - DTR2SPACE) && player.contains((spaceOnGrid) - DTR1SPACE)) 
+             
+//if checker was placed in the middle of the line, due to previous requirements there is no need to check each possibility individually
+             || (player.contains((spaceOnGrid) + DTR1SPACE) && player.contains((spaceOnGrid) - DTR1SPACE))) {
+         diagonalWin = true;
+          status = true;
+          
+        }
+      }
+    }else{
+    }return status;
+  }//hasWon method
+  
+  
+  /**
+   * the diagonalCheckTL method,
+   * makes sure that the four checkers in a diagonal line going from the top left to the bottom are in a proper alignment
+   * it checkes what the alignment of the checkers are in, and then checks the column of each space to make sure that no checkers are in the same column,
+   * which creates a "false win" or logic error. This is done by getting the index, in the player array, of the spaces being checked, and then checking the column
+   * at the index of the spaces being checked. For example, col != playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) checks what the index of the space
+   * being checked, spaceOnGrid + DTL1SPACE, then checks the column that has the same index of this space, and then compares it to the current column
+   * @param spaceOnGrid the value used to give each space a unique value so that it can be stored in an array list and extracted later
+   * @param col the current column that the checker was dropped into
+   * @param row the current row that the checker was dropped into
+   * @return status if the checkers are lined up properly
+   */
+  public boolean diagonalCheckTL(int spaceOnGrid, int col, int row){
+    boolean status = false;
+    //DTL means Diagonal Top Left
+    final int DTL1SPACE = 5;
+    final int DTL2SPACE = 10;
+    final int DTL3SPACE = 15;
+    if (currentPlayer == 1){
+      player = player1;
+      playerRow = player1Row;
+      playerCol = player1Col;
+    }else{
+      player = player2;
+      playerRow = player2Row;
+      playerCol = player2Col;
+    }
+    
+//checks if the diagonal line contains a checker 3 spaces away from the checker dropped in
+    if(player.contains((spaceOnGrid) + DTL3SPACE) || player.contains((spaceOnGrid) - DTL3SPACE)){
+      //if the checker was dropped onto the farthest left of the diagonal line, makes sure that the checkers really are in a diagonal line, and not scattered around
+      if(player.contains((spaceOnGrid + DTL3SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid + DTL2SPACE))
+           && col != playerCol.get(player.indexOf(spaceOnGrid + DTL3SPACE)) && playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid + DTL2SPACE)) &&
+         playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid + DTL3SPACE))
+           && playerCol.get(player.indexOf(spaceOnGrid + DTL2SPACE)) != playerCol.get(player.indexOf(spaceOnGrid + DTL3SPACE))){
+        return status = true;
+        
+        
+        //if the checker was dropped onto the farthest right of the diagonal line, makes sure that the checkers really are in a diagonal line, and not scattered around
+      }else if(player.contains((spaceOnGrid - DTL3SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid - DTL2SPACE))
+                 && col != playerCol.get(player.indexOf(spaceOnGrid - DTL3SPACE)) && playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL2SPACE)) &&
+               playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL3SPACE))
+                 && playerCol.get(player.indexOf(spaceOnGrid - DTL2SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL3SPACE))){
+        return status = true;
+      }
+    }
+    
+    
+    //checks if the checker was dropped into the middle of a diagonal line
+    else if(player.contains((spaceOnGrid) + DTL1SPACE) && player.contains((spaceOnGrid) - DTL1SPACE)){  
+      
+      //if the checker was dropped into the middle, it checks what side the 4th checker is on and then makes sure that the checkers really are in a diagonal line
+      if(player.contains((spaceOnGrid + DTL2SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid + DTL2SPACE))
+           && col != playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE)) && playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid + DTL2SPACE)) &&
+         playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE))
+           && playerCol.get(player.indexOf(spaceOnGrid + DTL2SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE))){
+        return status = true;
+      }else if(player.contains((spaceOnGrid - DTL2SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) && col != playerCol.get(player.indexOf(spaceOnGrid - DTL2SPACE))
+                 && col != playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE)) && playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL2SPACE)) &&
+               playerCol.get(player.indexOf(spaceOnGrid + DTL1SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE))
+                 && playerCol.get(player.indexOf(spaceOnGrid - DTL2SPACE)) != playerCol.get(player.indexOf(spaceOnGrid - DTL1SPACE))){
+        return status = true;
+      }
+    }else{
+    }return status;
+  }//DiagonalCheck method  
+  
+  
+  /**
+   * closeStuffs method
+   * this is what the program does after a win or tie
+   * it displays the message and closes the program
+   * @param currentPlayer who's turn it is 
+   * @param turn what the current turn is
+   * @param end if a win condition has been met
+   * @param diagonalWin if there is a diagonal line of checkers
+   * @param columnWin if there is a vertical line of checkers
+   * @param rowWin if there is a horizontal line of checkers
+   */
+  public static  void closeStuffs( int currentPlayer, int turn, int end, boolean diagonalWin, boolean columnWin, boolean rowWin){
+    if(turn == 42 && end < 1){
+      ConnectFour.infoBox("Tie Game!", "Game finished");
+      try{
+        Thread.sleep(100);
+      }  catch (InterruptedException e){
+      }
+      System.exit(0);
+    }    
+    if(end == 1){
+      if (currentPlayer == 1){
+        if(diagonalWin == true){
+          ConnectFour.infoBox("Diagonal line, Red Wins!", "Game finished");
+        }else if(columnWin == true){
+          ConnectFour.infoBox("Vertical line, Red Wins!", "Game finished");
+        }else{
+          ConnectFour.infoBox("Horizontal line, Red Wins!", "Game finished");
+        }
+      }else{
+          if(diagonalWin == true){
+            ConnectFour.infoBox("Diagonal line, Black Wins!", "Game finished");
+          }else if(columnWin == true){
+            ConnectFour.infoBox("Vertical line, Black Wins!", "Game finished");
+          }else{
+            ConnectFour.infoBox("Horizontal line, Black Wins!", "Game finished");
+          }       
+        }
+        try{
+          Thread.sleep(100);
+        }  catch (InterruptedException e){
+        }
+        System.exit(0);
+      }
+    }// closeStuffs
+    
+    
+    public static void main(String[] args) {
+      ConnectFour game = new ConnectFour();
+      ConnectFourGUI gui = new ConnectFourGUI();
+      ConnectFourListener listener = new ConnectFourListener(game, gui);
+    }//main
+  }//ConnectFour
